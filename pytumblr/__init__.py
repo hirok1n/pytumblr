@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from builtins import str
 from builtins import object
-from .helpers import validate_params, validate_blogname
+from .helpers import validate_params, validate_params_npf, validate_blogname
 from .request import TumblrRequest
 
 
@@ -286,6 +286,10 @@ class TumblrRestClient(object):
         return self.send_api_request("post", url, params, ['id', 'reblog_key'])
 
     @validate_blogname
+    def create_posts(self, blogname, **kwargs):
+        return self._send_posts(blogname, kwargs)
+
+    @validate_blogname
     def create_photo(self, blogname, **kwargs):
         """
         Create a photo post or photoset on a blog
@@ -505,6 +509,17 @@ class TumblrRestClient(object):
         kwargs.update({"id":id})
         return self.send_api_request('get', url, kwargs, valid_options)
 
+    def _post_valid_options_npf(self, reblog=None):
+        # These options are always valid
+        valid = ['content', 'layout', 'state', 'publish_on', 'date', 'date', 'tags',
+                 'source_url', 'send_to_twitter', 'send_to_facebook', 'is_private', 'slug']
+
+        # Other options are valid on a reblog
+        if reblog:
+            valid += ['parent_tumblelog_uuid', 'parent_post_id', 'reblog_key', 'hide_trail', 'exclude_trail_items']
+
+        return valid
+
     # Parameters valid for /post, /post/edit, and /post/reblog.
     def _post_valid_options(self, post_type=None):
         # These options are always valid
@@ -528,6 +543,12 @@ class TumblrRestClient(object):
 
         return valid
 
+    def _send_posts(self, blogname, params):
+        url = "/v2/blog/{}/posts".format(blogname)
+        valid_options = self._post_valid_options_npf(params.get('reblog', None))
+
+        return self.send_api_request_npf("post", url, params, valid_options)
+
     def _send_post(self, blogname, params):
         """
         Formats parameters and sends the API request off. Validates
@@ -547,6 +568,11 @@ class TumblrRestClient(object):
             params['tags'] = ",".join(params['tags'])
 
         return self.send_api_request("post", url, params, valid_options)
+
+    def send_api_request_npf(self, method, url, params={}, valid_parameters=[]):
+        validate_params_npf(valid_parameters, params)
+        if method == "post":
+            return self.request.post(url, params)
 
     def send_api_request(self, method, url, params={}, valid_parameters=[], needs_api_key=False):
         """

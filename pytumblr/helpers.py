@@ -28,6 +28,17 @@ def validate_params(valid_options, params):
         field_strings = ",".join(disallowed_fields)
         raise Exception("{} are not allowed fields".format(field_strings))
 
+def validate_params_npf(valid_options, params):
+    #crazy little if statement hanging by himself :(
+    if not params:
+        return
+
+    #No bad fields which are not in valid options can pass
+    disallowed_fields = [key for key in params['payload'].keys() if key not in valid_options]
+    if disallowed_fields:
+        field_strings = ",".join(disallowed_fields)
+        raise Exception("{} are not allowed fields".format(field_strings))
+
 def validate_blogname(fn):
     """
     Decorator to validate the blogname and let you pass in a blogname like:

@@ -67,6 +67,9 @@ class TumblrRequest(object):
         try:
             if files:
                 return self.post_multipart(url, params, files)
+            elif 'payload' in params:
+                resp = requests.post(url, json=params['payload'], headers=self.headers, auth=self.oauth)
+                return self.json_parse(resp)
             else:
                 data = urllib.parse.urlencode(params)
                 if not PY3:
